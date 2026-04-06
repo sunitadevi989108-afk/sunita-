@@ -1,0 +1,1107 @@
+
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { QRCodeSVG } from "qrcode.react";
+
+const GIRL_NAME = "Riya Kumari";
+const BOY_NAME = "Raju Sharma";
+
+const pageVariants = {
+  initial: { opacity: 0, x: 60 },
+  animate: { opacity: 1, x: 0, transition: { duration: 0.7, ease: "easeOut" } },
+  exit: { opacity: 0, x: -60, transition: { duration: 0.4 } },
+};
+
+function Petals() {
+  const petals = Array.from({ length: 18 }, (_, i) => i);
+  return (
+    <div className="pointer-events-none fixed inset-0 overflow-hidden z-0">
+      {petals.map((i) => (
+        <motion.div
+          key={i}
+          className="absolute text-2xl select-none"
+          style={{ left: `${(i * 5.5) % 100}%` }}
+          initial={{ y: -40, opacity: 0, rotate: 0 }}
+          animate={{
+            y: "110vh",
+            opacity: [0, 0.8, 0.8, 0],
+            rotate: 360,
+          }}
+          transition={{
+            duration: 5 + (i % 4),
+            delay: i * 0.4,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+        >
+          {i % 3 === 0 ? "🌸" : i % 3 === 1 ? "🌺" : "🌹"}
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+function GaneshPhoto() {
+  const src = `${import.meta.env.BASE_URL}ganesh.png`;
+  return (
+    <motion.div
+      className="flex flex-col items-center"
+      animate={{ y: [0, -10, 0] }}
+      transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+    >
+      <div className="relative">
+        <motion.div
+          className="rounded-2xl overflow-hidden"
+          style={{ width: 148, height: 148 }}
+          animate={{
+            boxShadow: [
+              "0 0 20px #f5c84288, 0 0 40px #f5c84244",
+              "0 0 50px #f5c842cc, 0 0 80px #f5c84266",
+              "0 0 20px #f5c84288, 0 0 40px #f5c84244",
+            ],
+          }}
+          transition={{ duration: 2.5, repeat: Infinity }}
+        >
+          <img
+            src={src}
+            alt="Lord Ganesha"
+            className="w-full h-full object-cover"
+            style={{ filter: "drop-shadow(0 0 12px #f5c84299)" }}
+          />
+        </motion.div>
+        <motion.div
+          className="absolute inset-0 rounded-2xl border-2 border-yellow-400"
+          style={{ borderStyle: "dashed" }}
+          animate={{ rotate: 360 }}
+          transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
+        />
+        <motion.div
+          className="absolute -top-3 left-1/2 -translate-x-1/2 text-xl"
+          animate={{ scale: [1, 1.3, 1] }}
+          transition={{ duration: 1.8, repeat: Infinity }}
+        >
+          🪔
+        </motion.div>
+      </div>
+      <div className="text-yellow-700 text-xs font-semibold mt-2 tracking-widest">
+        ॥ श्री गणेशाय नमः ॥
+      </div>
+    </motion.div>
+  );
+}
+
+const AUDIO_SRC = "https://upload.wikimedia.org/wikipedia/commons/0/09/Shahnai_Bismillah_Khan.ogg";
+
+let globalAudio: HTMLAudioElement | null = null;
+
+function getGlobalAudio() {
+  if (!globalAudio) {
+    globalAudio = new Audio(AUDIO_SRC);
+    globalAudio.loop = true;
+  }
+  return globalAudio;
+}
+
+function MusicPlayer() {
+  const [playing, setPlaying] = useState(false);
+  const [blocked, setBlocked] = useState(false);
+
+  useEffect(() => {
+    const audio = getGlobalAudio();
+    const tryPlay = () => {
+      audio.play().then(() => {
+        setPlaying(true);
+        setBlocked(false);
+      }).catch(() => setBlocked(true));
+    };
+    tryPlay();
+
+    const onInteract = () => {
+      audio.play().then(() => {
+        setPlaying(true);
+        setBlocked(false);
+        document.removeEventListener("click", onInteract);
+        document.removeEventListener("touchstart", onInteract);
+      }).catch(() => {});
+    };
+    document.addEventListener("click", onInteract);
+    document.addEventListener("touchstart", onInteract);
+
+    const sync = () => setPlaying(!audio.paused);
+    audio.addEventListener("play", sync);
+    audio.addEventListener("pause", sync);
+    return () => {
+      audio.removeEventListener("play", sync);
+      audio.removeEventListener("pause", sync);
+      document.removeEventListener("click", onInteract);
+      document.removeEventListener("touchstart", onInteract);
+    };
+  }, []);
+
+  const toggle = () => {
+    const audio = getGlobalAudio();
+    if (audio.paused) {
+      audio.play().then(() => setPlaying(true)).catch(() => {});
+    } else {
+      audio.pause();
+      setPlaying(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <motion.div
+        className="flex items-center gap-3 px-5 py-3 rounded-full cursor-pointer select-none shadow-md"
+        style={{
+          background: "linear-gradient(135deg, #fffbe788, #f5c84222)",
+          border: "1.5px solid #d4af37aa",
+        }}
+        whileTap={{ scale: 0.95 }}
+        onClick={toggle}
+      >
+        <motion.span
+          className="text-2xl"
+          animate={playing ? { scale: [1, 1.15, 1] } : {}}
+          transition={{ duration: 1, repeat: Infinity }}
+        >
+          {playing ? "⏸" : "▶"}
+        </motion.span>
+        <div className="flex flex-col">
+          <span className="text-amber-800 text-xs font-bold tracking-wide">
+            🎵 Shehnai — Bismillah Khan
+          </span>
+          <span className="text-amber-600 text-[10px]">Wedding Blessing Music</span>
+        </div>
+        {playing && (
+          <div className="flex gap-0.5 items-end h-5">
+            {[1, 2, 3, 4].map((b) => (
+              <motion.div
+                key={b}
+                className="w-1 rounded-full bg-amber-500"
+                animate={{ height: ["3px", "16px", "6px", "16px", "3px"] }}
+                transition={{ duration: 0.8, delay: b * 0.12, repeat: Infinity }}
+              />
+            ))}
+          </div>
+        )}
+      </motion.div>
+      {blocked && !playing && (
+        <p className="text-[10px] text-amber-600 animate-pulse">
+          Tap anywhere to play music 🎶
+        </p>
+      )}
+    </div>
+  );
+}
+
+const CURTAIN_FLOWERS = Array.from({ length: 28 }, (_, i) => {
+  const angle = (i / 28) * 360;
+  const rad = (angle * Math.PI) / 180;
+  const dist = 180 + (i % 4) * 60;
+  const emojis = ["🌸", "🌺", "🌹", "🌼", "🪷", "💮"];
+  return {
+    id: i,
+    tx: Math.cos(rad) * dist,
+    ty: Math.sin(rad) * dist,
+    rotate: angle * 2,
+    emoji: emojis[i % emojis.length],
+    size: 20 + (i % 4) * 8,
+    delay: (i % 6) * 0.035,
+    duration: 0.55 + (i % 3) * 0.08,
+  };
+});
+
+const SWEEP_FLOWERS = Array.from({ length: 20 }, (_, i) => ({
+  id: i,
+  top: (i / 20) * 110 - 5,
+  delay: i * 0.04,
+  emoji: ["🌸", "🌺", "🌹", "🌼", "🪷"][i % 5],
+  size: 18 + (i % 3) * 10,
+}));
+
+// FIX #3: FlowerCurtain was defined but never used — now exported and ready to use.
+// Usage: place <FlowerCurtain id={curtainKey} /> inside WeddingCard when navigating pages.
+function FlowerCurtain({ id }: { id: number }) {
+  if (id === 0) return null;
+  return (
+    <motion.div
+      key={id}
+      className="fixed inset-0 z-[90] pointer-events-none flex items-center justify-center overflow-hidden"
+      initial={{ opacity: 1 }}
+      animate={{ opacity: [1, 1, 0] }}
+      transition={{ duration: 1.0, times: [0, 0.65, 1] }}
+    >
+      {/* Radial burst from center */}
+      {CURTAIN_FLOWERS.map((f) => (
+        <motion.div
+          key={f.id}
+          className="absolute select-none"
+          style={{ fontSize: f.size, lineHeight: 1 }}
+          initial={{ x: 0, y: 0, opacity: 0, rotate: 0, scale: 0 }}
+          animate={{
+            x: f.tx,
+            y: f.ty,
+            opacity: [0, 1, 1, 0],
+            rotate: f.rotate,
+            scale: [0, 1.3, 1, 0.5],
+          }}
+          transition={{
+            duration: f.duration,
+            delay: f.delay,
+            ease: "easeOut",
+          }}
+        >
+          {f.emoji}
+        </motion.div>
+      ))}
+
+      {/* FIX #1: Was using Unicode minus U+2212 "−" instead of ASCII hyphen-minus "-"
+          Both the string "−110vw" and the numeric −30 were using the wrong character,
+          causing a runtime error / incorrect CSS value in Framer Motion. */}
+      {SWEEP_FLOWERS.map((f) => (
+        <motion.div
+          key={`sweep-${f.id}`}
+          className="absolute select-none"
+          style={{
+            top: `${f.top}%`,
+            fontSize: f.size,
+            lineHeight: 1,
+          }}
+          initial={{ x: "-110vw", opacity: 0, rotate: -30 }}
+          animate={{
+            x: ["-110vw", "0vw", "110vw"],
+            opacity: [0, 1, 1, 0],
+            rotate: [-30, 0, 30],
+          }}
+          transition={{
+            duration: 0.75,
+            delay: 0.15 + f.delay,
+            ease: "easeInOut",
+          }}
+        >
+          {f.emoji}
+        </motion.div>
+      ))}
+    </motion.div>
+  );
+}
+
+const SPARKS = Array.from({ length: 24 }, (_, i) => ({
+  id: i,
+  x: 10 + (i * 37) % 80,
+  y: 5 + (i * 53) % 85,
+  size: 3 + (i % 5),
+  delay: 0.4 + (i * 0.18) % 2.2,
+}));
+
+const SPLASH_PETALS = Array.from({ length: 14 }, (_, i) => ({
+  id: i,
+  left: 2 + i * 7,
+  delay: 2.2 + i * 0.14,
+  type: i % 3,
+}));
+
+function SplashScreen({ onDone }: { onDone: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 5200);
+    return () => clearTimeout(t);
+  }, [onDone]);
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden cursor-pointer select-none"
+      style={{
+        background:
+          "radial-gradient(ellipse at 50% 40%, #3d1a00 0%, #1a0800 50%, #0a0200 100%)",
+      }}
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.9 } }}
+      onClick={onDone}
+    >
+      {/* Shimmer sweep */}
+      <motion.div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(115deg, transparent 30%, rgba(255,210,80,0.18) 50%, transparent 70%)",
+        }}
+        initial={{ x: "-100%" }}
+        animate={{ x: "200%" }}
+        transition={{ duration: 1.6, delay: 3.4, ease: "easeInOut" }}
+      />
+
+      {/* Sparkle particles */}
+      {SPARKS.map((s) => (
+        <motion.div
+          key={s.id}
+          className="absolute rounded-full"
+          style={{
+            left: `${s.x}%`,
+            top: `${s.y}%`,
+            width: s.size,
+            height: s.size,
+            background: s.id % 2 === 0 ? "#f5c842" : "#fff9c4",
+          }}
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ opacity: [0, 1, 0], scale: [0, 1.8, 0] }}
+          transition={{ duration: 1.2, delay: s.delay, repeat: 1, repeatDelay: 0.6 }}
+        />
+      ))}
+
+      {/* Outer decorative rings */}
+      <div className="relative flex items-center justify-center mb-6">
+        {[180, 148, 116].map((size, idx) => (
+          <motion.div
+            key={idx}
+            className="absolute rounded-full"
+            style={{
+              width: size,
+              height: size,
+              border: `${idx === 0 ? 1 : 1.5}px ${idx === 1 ? "dashed" : "solid"} #d4af37${idx === 0 ? "55" : idx === 1 ? "88" : "cc"}`,
+            }}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1, rotate: idx % 2 === 0 ? 360 : -360 }}
+            transition={{
+              scale: { duration: 0.7, delay: 0.1 * idx },
+              opacity: { duration: 0.5, delay: 0.1 * idx },
+              rotate: { duration: 6 - idx, repeat: Infinity, ease: "linear" },
+            }}
+          />
+        ))}
+
+        {/* Center medallion */}
+        <motion.div
+          className="relative z-10 flex items-center justify-center w-20 h-20 rounded-full"
+          style={{
+            background: "radial-gradient(circle, #f5c842 0%, #b8860b 60%, #6b4500 100%)",
+            boxShadow: "0 0 30px #f5c84288, 0 0 60px #f5c84244",
+          }}
+          initial={{ scale: 0, rotate: -200 }}
+          animate={{
+            scale: 1,
+            rotate: 0,
+            boxShadow: [
+              "0 0 20px #f5c84288",
+              "0 0 60px #f5c842cc",
+              "0 0 20px #f5c84288",
+            ],
+          }}
+          transition={{
+            scale: { type: "spring", stiffness: 120, delay: 0.3 },
+            rotate: { duration: 0.8, delay: 0.3 },
+            boxShadow: { duration: 2, repeat: Infinity, delay: 1 },
+          }}
+        >
+          <motion.span
+            className="text-4xl"
+            animate={{ rotate: [0, -10, 10, -10, 0] }}
+            transition={{ duration: 0.6, delay: 1.2 }}
+          >
+            💍
+          </motion.span>
+        </motion.div>
+      </div>
+
+      {/* Names */}
+      <div className="flex items-center gap-4 mb-3">
+        <motion.span
+          className="text-5xl font-bold"
+          style={{ fontFamily: "Georgia, serif", color: "#f5c842", textShadow: "0 2px 20px #f5c84266" }}
+          initial={{ opacity: 0, x: -80 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ type: "spring", stiffness: 80, delay: 1.2 }}
+        >
+          Riya
+        </motion.span>
+
+        <motion.div
+          className="flex flex-col items-center"
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ opacity: 1, scale: [0, 1.6, 1] }}
+          transition={{ duration: 0.7, delay: 1.9 }}
+        >
+          <motion.span
+            className="text-3xl"
+            animate={{ scale: [1, 1.25, 1] }}
+            transition={{ duration: 1.2, repeat: Infinity, delay: 2.2 }}
+          >
+            ❤️
+          </motion.span>
+        </motion.div>
+
+        <motion.span
+          className="text-5xl font-bold"
+          style={{ fontFamily: "Georgia, serif", color: "#f5c842", textShadow: "0 2px 20px #f5c84266" }}
+          initial={{ opacity: 0, x: 80 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ type: "spring", stiffness: 80, delay: 1.2 }}
+        >
+          Raju
+        </motion.span>
+      </div>
+
+      {/* Subtitle */}
+      <motion.p
+        className="text-amber-400 tracking-[8px] text-xs uppercase mb-2"
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.9, delay: 2.3 }}
+      >
+        Wedding Invitation
+      </motion.p>
+
+      <motion.p
+        className="text-amber-600 text-[10px] tracking-[3px]"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 2.8 }}
+      >
+        ✦ 18 February 2025 · Goa ✦
+      </motion.p>
+
+      {/* Falling petals */}
+      {SPLASH_PETALS.map((p) => (
+        <motion.div
+          key={p.id}
+          className="absolute text-xl pointer-events-none"
+          style={{ left: `${p.left}%`, top: -30 }}
+          initial={{ y: 0, opacity: 0, rotate: 0 }}
+          animate={{ y: "110vh", opacity: [0, 1, 1, 0], rotate: 540 }}
+          transition={{ duration: 3.2, delay: p.delay, ease: "linear" }}
+        >
+          {p.type === 0 ? "🌸" : p.type === 1 ? "🌺" : "🌹"}
+        </motion.div>
+      ))}
+
+      {/* Progress bar */}
+      <div
+        className="absolute bottom-10 left-1/2 -translate-x-1/2 rounded-full overflow-hidden"
+        style={{ width: 120, height: 2, background: "#ffffff22" }}
+      >
+        <motion.div
+          className="h-full rounded-full"
+          style={{ background: "linear-gradient(to right, #f5c842, #fff9c4)" }}
+          initial={{ width: "0%" }}
+          animate={{ width: "100%" }}
+          transition={{ duration: 5.2, ease: "linear" }}
+        />
+      </div>
+
+      <motion.p
+        className="absolute bottom-5 text-[9px] text-amber-700 tracking-[3px] uppercase"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0, 1, 0.4, 1] }}
+        transition={{ duration: 2, delay: 1, repeat: Infinity }}
+      >
+        Tap to skip
+      </motion.p>
+    </motion.div>
+  );
+}
+
+function LogoRR() {
+  return (
+    <motion.div
+      className="relative flex items-center justify-center"
+      initial={{ scale: 0, rotate: -30 }}
+      animate={{ scale: 1, rotate: 0 }}
+      transition={{ type: "spring", stiffness: 80, delay: 0.2 }}
+    >
+      <div
+        className="w-36 h-36 rounded-full flex items-center justify-center"
+        style={{
+          background: "radial-gradient(circle, #fffbe7 60%, #e8c85a 100%)",
+          boxShadow: "0 0 40px #d4af3788",
+          border: "2px solid #d4af37",
+        }}
+      >
+        <span
+          className="text-5xl font-bold"
+          style={{ fontFamily: "Georgia, serif", color: "#8B6914", letterSpacing: "-4px" }}
+        >
+          R&R
+        </span>
+      </div>
+      <motion.div
+        className="absolute inset-0 rounded-full border-2 border-yellow-600"
+        style={{ borderStyle: "dashed" }}
+        animate={{ rotate: 360 }}
+        transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+      />
+      <motion.div
+        className="absolute text-2xl"
+        style={{ top: -8, left: "50%", transform: "translateX(-50%)" }}
+        animate={{ scale: [1, 1.2, 1] }}
+        transition={{ duration: 2, repeat: Infinity }}
+      >
+        💍
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// FIX #5: Guard window.location.href against SSR / non-browser environments.
+function QRFooter() {
+  const url = typeof window !== "undefined"
+    ? window.location.href.split("?")[0]
+    : "";
+  if (!url) return null;
+  return (
+    <div className="flex flex-col items-center mt-4 opacity-70">
+      <QRCodeSVG value={url} size={56} bgColor="transparent" fgColor="#8B6914" level="M" />
+      <span className="text-[9px] text-amber-700 mt-0.5 tracking-wider">Scan to open</span>
+    </div>
+  );
+}
+
+function Divider() {
+  return (
+    <div className="flex items-center gap-2 w-full max-w-xs mx-auto my-3">
+      <div className="flex-1 h-px" style={{ background: "linear-gradient(to right, transparent, #d4af37)" }} />
+      <span className="text-amber-600 text-lg">❧</span>
+      <div className="flex-1 h-px" style={{ background: "linear-gradient(to left, transparent, #d4af37)" }} />
+    </div>
+  );
+}
+
+function NextButton({ label = "Next →", onClick }: { label?: string; onClick: () => void }) {
+  return (
+    <motion.button
+      onClick={onClick}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.96 }}
+      className="px-8 py-3 rounded-full text-white font-semibold tracking-widest text-sm shadow-lg"
+      style={{
+        background: "linear-gradient(135deg, #d4af37, #8B6914)",
+        fontFamily: "Georgia, serif",
+        letterSpacing: "2px",
+        boxShadow: "0 4px 20px #d4af3766",
+      }}
+    >
+      {label}
+    </motion.button>
+  );
+}
+
+function CardShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="w-full max-w-sm mx-auto min-h-screen flex flex-col items-center justify-between py-8 px-5 relative"
+      style={{
+        background: "linear-gradient(160deg, #fffef5 0%, #fdf3d0 50%, #fef9e7 100%)",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function Page1({ onNext }: { onNext: () => void }) {
+  return (
+    <CardShell>
+      <div className="flex flex-col items-center gap-4 mt-4">
+        <motion.p
+          className="text-amber-600 text-xs tracking-[4px] uppercase"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          Wedding Invitation
+        </motion.p>
+
+        <LogoRR />
+
+        <div className="flex flex-col items-center gap-1 mt-2">
+          <motion.h1
+            className="text-3xl"
+            style={{ fontFamily: "Georgia, serif", color: "#5a3e0a" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            Welcome
+          </motion.h1>
+          <motion.p
+            className="text-amber-700 text-sm text-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7 }}
+          >
+            You are invited to celebrate the<br />union of two souls
+          </motion.p>
+        </div>
+
+        <Divider />
+        <MusicPlayer />
+      </div>
+
+      <div className="flex flex-col items-center gap-4 w-full">
+        <NextButton label="Next →" onClick={onNext} />
+        <QRFooter />
+      </div>
+    </CardShell>
+  );
+}
+
+function Page2({ onNext }: { onNext: () => void }) {
+  return (
+    <CardShell>
+      <div className="flex flex-col items-center gap-5 mt-8 w-full">
+        <motion.p
+          className="text-amber-600 text-xs tracking-[4px] uppercase"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          Couple&apos;s Introduction
+        </motion.p>
+
+        <Divider />
+
+        <motion.div
+          className="flex flex-col items-center gap-2"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <h1
+            className="text-5xl text-center leading-tight"
+            style={{ fontFamily: "'Brush Script MT', cursive, Georgia, serif", color: "#5a3e0a" }}
+          >
+            {GIRL_NAME}
+          </h1>
+          <span className="text-amber-500 text-2xl" style={{ fontFamily: "Georgia, serif" }}>
+            ❦ and ❦
+          </span>
+          <h1
+            className="text-5xl text-center leading-tight"
+            style={{ fontFamily: "'Brush Script MT', cursive, Georgia, serif", color: "#5a3e0a" }}
+          >
+            {BOY_NAME}
+          </h1>
+        </motion.div>
+
+        <Divider />
+
+        <motion.div
+          className="text-center text-amber-700 text-sm px-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          Two hearts, one destiny.<br />
+          Join us as we begin our forever.
+        </motion.div>
+      </div>
+
+      <div className="flex flex-col items-center gap-4 w-full">
+        <NextButton label="Welcome Everyone 🎊" onClick={onNext} />
+        <QRFooter />
+      </div>
+    </CardShell>
+  );
+}
+
+function Page3({ onNext }: { onNext: () => void }) {
+  return (
+    <CardShell>
+      <div className="flex flex-col items-center gap-4 mt-4 w-full">
+        <motion.p
+          className="text-amber-600 text-xs tracking-[4px] uppercase"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          Blessings &amp; Info
+        </motion.p>
+
+        <GaneshPhoto />
+
+        <motion.div
+          className="flex flex-col items-center gap-1"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <span
+            className="text-lg italic text-amber-700"
+            style={{ fontFamily: "Georgia, serif" }}
+          >
+            ✨ Happy Wedding Life ✨
+          </span>
+        </motion.div>
+
+        <Divider />
+
+        <motion.div
+          className="flex flex-col items-center gap-1"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <h2
+            className="text-3xl text-center"
+            style={{ fontFamily: "'Brush Script MT', cursive, Georgia, serif", color: "#5a3e0a" }}
+          >
+            {GIRL_NAME}
+          </h2>
+          <span className="text-amber-500 text-lg">❦ weds ❦</span>
+          <h2
+            className="text-3xl text-center"
+            style={{ fontFamily: "'Brush Script MT', cursive, Georgia, serif", color: "#5a3e0a" }}
+          >
+            {BOY_NAME}
+          </h2>
+        </motion.div>
+
+        <Divider />
+
+        <motion.div
+          className="text-center px-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7 }}
+        >
+          <p className="text-amber-700 text-xs leading-relaxed">
+            With the blessings of Lord Ganesha,<br />
+            we joyfully invite you to share<br />
+            in our sacred celebration.
+          </p>
+        </motion.div>
+      </div>
+
+      <div className="flex flex-col items-center gap-4 w-full">
+        <NextButton label="See Our Photos 📸" onClick={onNext} />
+        <QRFooter />
+      </div>
+    </CardShell>
+  );
+}
+
+function AvatarPortrait({
+  name,
+  src,
+  label,
+  color,
+  delay = 0,
+}: {
+  name: string;
+  src: string;
+  label: string;
+  color: string;
+  delay?: number;
+}) {
+  return (
+    <motion.div
+      className="flex flex-col items-center gap-3"
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, type: "spring", stiffness: 70 }}
+    >
+      <motion.div
+        className="relative rounded-2xl overflow-hidden shadow-xl"
+        style={{
+          width: 130,
+          height: 160,
+          border: `2.5px solid ${color}`,
+        }}
+        animate={{
+          boxShadow: [`0 4px 24px ${color}55`, `0 8px 48px ${color}99`, `0 4px 24px ${color}55`],
+        }}
+        transition={{ duration: 2.5, repeat: Infinity }}
+      >
+        <img
+          src={src}
+          alt={name}
+          className="w-full h-full object-cover object-top"
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(to bottom, transparent 60%, ${color}44 100%)`,
+          }}
+        />
+        <motion.div
+          className="absolute top-2 right-2 text-xl"
+          animate={{ scale: [1, 1.2, 1], rotate: [0, 8, -8, 0] }}
+          transition={{ duration: 2.2, repeat: Infinity }}
+        >
+          {label}
+        </motion.div>
+      </motion.div>
+      <motion.p
+        className="text-center font-semibold"
+        style={{
+          fontFamily: "'Brush Script MT', cursive, Georgia, serif",
+          color: "#5a3e0a",
+          fontSize: "1.15rem",
+        }}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: delay + 0.35 }}
+      >
+        {name}
+      </motion.p>
+    </motion.div>
+  );
+}
+
+function Page4({ onNext }: { onNext: () => void }) {
+  return (
+    <CardShell>
+      <div className="flex flex-col items-center gap-4 mt-4 w-full">
+        <motion.p
+          className="text-amber-600 text-xs tracking-[4px] uppercase"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          The Couple
+        </motion.p>
+
+        <Divider />
+
+        <div className="flex gap-6 justify-center items-start mt-2">
+          <AvatarPortrait
+            name={GIRL_NAME}
+            src={`${import.meta.env.BASE_URL}girl.jpg`}
+            label="🌸"
+            color="#d4609a"
+            delay={0.2}
+          />
+          <AvatarPortrait
+            name={BOY_NAME}
+            src={`${import.meta.env.BASE_URL}boy.jpg`}
+            label="💙"
+            color="#4a7fc1"
+            delay={0.5}
+          />
+        </div>
+
+        <Divider />
+
+        {/* FIX #2: "💕".split("") splits the emoji into broken UTF-16 surrogate halves.
+            Use Array.from() or spread [...] to correctly iterate Unicode code points. */}
+        <motion.div
+          className="flex flex-col items-center gap-2"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+        >
+          <div className="flex gap-3 text-2xl">
+            {Array.from("💕").map((c, i) => (
+              <motion.span
+                key={i}
+                animate={{ scale: [1, 1.3, 1] }}
+                transition={{ duration: 1.2, delay: i * 0.2, repeat: Infinity }}
+              >
+                {c}
+              </motion.span>
+            ))}
+          </div>
+          <p className="text-amber-700 text-xs text-center">
+            Together forever, always and always
+          </p>
+        </motion.div>
+      </div>
+
+      <div className="flex flex-col items-center gap-4 w-full">
+        <NextButton label="View Venue 📍" onClick={onNext} />
+        <QRFooter />
+      </div>
+    </CardShell>
+  );
+}
+
+function Page5() {
+  return (
+    <CardShell>
+      <div className="flex flex-col items-center gap-4 mt-4 w-full">
+        <motion.p
+          className="text-amber-600 text-xs tracking-[4px] uppercase"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          Wedding Venue
+        </motion.p>
+
+        <motion.div
+          className="flex flex-col items-center gap-1"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <span className="text-2xl">📍</span>
+          <h2
+            className="text-xl text-center font-bold"
+            style={{ fontFamily: "Georgia, serif", color: "#5a3e0a" }}
+          >
+            Goa Wedding Hall
+          </h2>
+          <p className="text-amber-600 text-xs text-center">Goa, India</p>
+        </motion.div>
+
+        <Divider />
+
+        <motion.div
+          className="w-full rounded-2xl overflow-hidden shadow-lg"
+          style={{ border: "2px solid #d4af37" }}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.4 }}
+        >
+          <iframe
+            title="Goa Wedding Hall Location"
+            src="https://maps.google.com/maps?q=Goa+Wedding+Hall,+Panaji,+Goa,+India&output=embed&z=15"
+            width="100%"
+            height="220"
+            style={{ border: 0, display: "block" }}
+            loading="lazy"
+          />
+        </motion.div>
+
+        <motion.div
+          className="w-full rounded-xl px-4 py-3 flex flex-col gap-1"
+          style={{ background: "#fff8e1", border: "1px solid #d4af3744" }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+        >
+          <p className="text-amber-800 text-xs text-center">
+            📅 <strong>Date:</strong> 18th February 2025
+          </p>
+          <p className="text-amber-800 text-xs text-center">
+            🕕 <strong>Time:</strong> 6:00 PM onwards
+          </p>
+          <p className="text-amber-800 text-xs text-center">
+            📍 <strong>Venue:</strong> Goa Wedding Hall, Panaji, Goa
+          </p>
+        </motion.div>
+
+        <Divider />
+
+        <motion.div
+          className="flex flex-col items-center gap-1"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+        >
+          <p
+            className="text-2xl text-center"
+            style={{ fontFamily: "Georgia, serif", color: "#5a3e0a" }}
+          >
+            🎊 We await your presence! 🎊
+          </p>
+          <p className="text-amber-600 text-xs text-center mt-1">
+            Scan QR code to share this invitation
+          </p>
+        </motion.div>
+      </div>
+
+      <QRFooter />
+    </CardShell>
+  );
+}
+
+export default function WeddingCard() {
+  const [page, setPage] = useState(0);
+  const [showSplash, setShowSplash] = useState(true);
+  const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const goToPage = (next: number) => {
+    setPage(next);
+    if (autoTimer.current) clearTimeout(autoTimer.current);
+  };
+
+  // FIX #4: Auto-advance was using (p + 1) % 5 which wraps Page5 back to Page1.
+  // Now it stops advancing once the last page is reached.
+  useEffect(() => {
+    if (showSplash) return;
+    const LAST_PAGE = 4;
+    if (page >= LAST_PAGE) return; // Do not auto-advance past the last page
+    autoTimer.current = setTimeout(() => {
+      setPage((p) => p + 1);
+    }, 10000);
+    return () => {
+      if (autoTimer.current) clearTimeout(autoTimer.current);
+    };
+  }, [page, showSplash]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [page]);
+
+  const pages = [
+    <Page1 key={0} onNext={() => goToPage(1)} />,
+    <Page2 key={1} onNext={() => goToPage(2)} />,
+    <Page3 key={2} onNext={() => goToPage(3)} />,
+    <Page4 key={3} onNext={() => goToPage(4)} />,
+    <Page5 key={4} />,
+  ];
+
+  return (
+    <div
+      className="min-h-screen relative overflow-x-hidden"
+      style={{ background: "linear-gradient(160deg, #fffef5 0%, #fdf3d0 60%, #fef9e7 100%)" }}
+    >
+      <AnimatePresence>
+        {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
+      </AnimatePresence>
+
+      <Petals />
+
+      <div className="relative z-10">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={page}
+            variants={pageVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+          >
+            {pages[page]}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {page > 0 && (
+        <button
+          onClick={() => goToPage(Math.max(0, page - 1))}
+          className="fixed top-4 left-4 z-50 w-9 h-9 rounded-full flex items-center justify-center text-amber-700 text-sm"
+          style={{ background: "#fff8", border: "1px solid #d4af3766" }}
+        >
+          ←
+        </button>
+      )}
+
+      <div className="fixed bottom-4 left-0 right-0 flex flex-col items-center gap-1.5 z-50">
+        {!showSplash && (
+          <motion.div
+            className="overflow-hidden rounded-full"
+            style={{ width: 80, height: 2, background: "#d4af3733" }}
+          >
+            <motion.div
+              key={page}
+              className="h-full rounded-full"
+              style={{ background: "linear-gradient(to right, #d4af37, #f5c842)" }}
+              initial={{ width: "0%" }}
+              animate={{ width: "100%" }}
+              transition={{ duration: 10, ease: "linear" }}
+            />
+          </motion.div>
+        )}
+        <div className="flex gap-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <button
+              key={i}
+              onClick={() => goToPage(i)}
+              className="rounded-full transition-all duration-300"
+              style={{
+                width: page === i ? 20 : 8,
+                height: 8,
+                background: page === i ? "#d4af37" : "#d4af3766",
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
